@@ -43,20 +43,26 @@ unsigned modo=MODO_DETENIDO;
 
 void SupervisaBoton(void)
 	{
-	//Debouncing???
 	static bool pulsador_presionado_ant=0;
 	static unsigned long ms_ini=0;
+	//Debouncing (Anti-Rebote) ??? 
+
 	//Si está en CARRERA y se presiona el botón --> pasar a modo DETENIDO
 	//Si está en LANZADOR y se libera el botón --> pasar a modo CARRERA
 	if(PULSADOR_PRESIONADO && !pulsador_presionado_ant)	//Se presionó el botón
 		{
 		ms_ini=millis(); 
-		modo= (modo==MODO_CARRERA) ? MODO_DETENIDO : MODO_LANZADOR;
+		if(modo==MODO_CARRERA) modo=MODO_DETENIDO;
 		}
 	if(!PULSADOR_PRESIONADO && pulsador_presionado_ant)	//Se liberó el botón
 		{
-		if(modo==MODO_LANZADOR)
-			if(millis()-ms_ini >2000) modo=MODO_CARRERA;
+		if(millis()-ms_ini >2000) 	//Si pasaron más de 2 segundos
+			{
+			if(modo==MODO_LANZADOR)
+				modo=MODO_CARRERA;
+			}
+		else
+			modo=MODO_DETENIDO;
 		}
 	pulsador_presionado_ant=PULSADOR_PRESIONADO;
 	}
