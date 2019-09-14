@@ -1,5 +1,7 @@
 
 #include <AFMotor.h>
+#include "led_test.h"
+
 unsigned long cronometro = 0; // DEBUG
 void debugVel(); void debugSens(); void debugErr(); void debugMap();
 
@@ -17,15 +19,6 @@ int pulsador = 4;
 
 float kP = 0.015; float kI = 0.0003; float kD = 0.2; // PID
 #define PULSADOR_PRESIONADO (digitalRead(pulsador) == HIGH)
-//http://blog.theinventorhouse.org/usando-las-entradas-analogicas-de-arduino-como-digitales/
-//A0 a A5 --> 14 a 19
-
-//LED DE TESTEO
-#define PIN_LED_TEST 13
-#define CONFIGURAR_LED_TEST pinMode(PIN_LED_TEST, OUTPUT)
-#define ENCENDER_LED_TEST digitalWrite(PIN_LED_TEST, HIGH)
-#define APAGAR_LED_TEST digitalWrite(PIN_LED_TEST, LOW)
-
 
 void setup() {
 	//Led de Testeo
@@ -36,17 +29,7 @@ void setup() {
 	APAGAR_LED_TEST;
 	motorI.setSpeed(0); motorD.setSpeed(0);
 	}
-
-void LedTest(void)
-	{
-	static unsigned long ms_ant=0;
-	static bool estado=0;
-	if(millis()-ms_ant < 500) return;
-	ms_ant=millis();
-	estado=!estado;
-	if(estado) ENCENDER_LED_TEST;
-	else 		APAGAR_LED_TEST;
-	}
+	
 /*
 Utilizar el botón para cambiar de estado
 Botón presionado por más de 2 segundos --> arranca al liberar ---> Destellar rápido indicando que está listo para arrancar
@@ -60,20 +43,29 @@ unsigned modo=MODO_DETENIDO;
 
 void SupervisaBoton(void)
 	{
-	static bool boton_presionado_ant=0;
-	static unsigned long ms_ant=0;
+	//Debouncing???
+	static bool pulsador_presionado_ant=0;
+	static unsigned long ms_ini=0;
 	//Si está en CARRERA y se presiona el botón --> pasar a modo DETENIDO
 	//Si está en LANZADOR y se libera el botón --> pasar a modo CARRERA
-	if(PULSADOR_PRESIONADO && !boton_presionado_ant)	//Se presionó el botón
+	if(PULSADOR_PRESIONADO && !pulsador_presionado_ant)	//Se presionó el botón
 		{
-		if(modo==MODO_CARRERA) {MODO_DETENIDO; return;}
+		ms_ini=millis(); 
+		modo= (modo==MODO_CARRERA) ? MODO_DETENIDO : MODO_LANZADOR;
 		}
+	if(!PULSADOR_PRESIONADO && pulsador_presionado_ant)	//Se liberó el botón
+		{
+		if(modo==MODO_LANZADOR)
+			if(millis()-ms_ini >2000) modo=MODO_CARRERA;
+		}
+	pulsador_presionado_ant=PULSADOR_PRESIONADO;
 	}
 
 void loop() {
 	LedTest();
-	// SupervisaBoton();
-	// if(estado!=STA_CARRERA) return;	//Queda a la espera del modo carrera
+	SupervisaBoton();
+	if(modo!=MODO_CARRERA) return;	//Queda a la espera del modo carrera
+
 	if(PULSADOR_PRESIONADO){
 		motorI.run(RELEASE); motorD.run(RELEASE);
 		Serial.println("Apagado");
@@ -213,3 +205,4 @@ void debugMap(){
     Serial.println(sD);
 
 }
+
