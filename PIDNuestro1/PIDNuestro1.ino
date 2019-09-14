@@ -63,8 +63,8 @@ void SupervisaBoton(void)
 
 void loop() {
 	LedTest();
-	SupervisaBoton();
-	if(modo!=MODO_CARRERA) return;	//Queda a la espera del modo carrera
+	// SupervisaBoton();
+	// if(modo!=MODO_CARRERA) return;	//Queda a la espera del modo carrera
 
 	if(PULSADOR_PRESIONADO){
 		motorI.run(RELEASE); motorD.run(RELEASE);
